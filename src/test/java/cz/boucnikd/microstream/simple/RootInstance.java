@@ -1,5 +1,6 @@
-package cz.boucnikd.microstream;
+package cz.boucnikd.microstream.simple;
 
+import cz.boucnikd.microstream.DTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 

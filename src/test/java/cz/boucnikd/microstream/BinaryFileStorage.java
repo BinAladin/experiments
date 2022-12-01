@@ -16,4 +16,14 @@ public class BinaryFileStorage implements Storage {
     public void save(DTO dto) throws Exception {
         file.writeObject(dto);
     }
+
+    @Override
+    public DTO findById(Long id) throws Exception {
+        return null;
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+
+    }
 }

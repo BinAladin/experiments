@@ -1,5 +1,7 @@
 package cz.boucnikd.microstream;
 
+import cz.boucnikd.microstream.indexed.MicrostreamStorageWithIndexes;
+import cz.boucnikd.microstream.simple.MicrostreamStorage;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
@@ -14,6 +16,8 @@ public class PerformanceTest {
 
     private Storage storage;
 
+    private long idCounter = 0;
+
 
     @Test
     void testMicrostream() throws Exception {
@@ -27,7 +31,29 @@ public class PerformanceTest {
         test();
     }
 
-    private void test() throws Exception{
+    @Test
+    void testMicrostreamLookups() throws Exception {
+        var msStorage = new MicrostreamStorage();
+        msStorage.init();
+
+        var dtos = IntStream.range(0, 1000).mapToObj(this::newDto).collect(Collectors.toList());
+        trackNanos(() -> msStorage.save(dtos), "save 1000 dtos");
+
+        trackNanos(() -> msStorage.findById(500L).id(), "find by id");
+    }
+
+    @Test
+    void testMicrostreamLookupsWithIndexes() throws Exception {
+        var msStorage = new MicrostreamStorageWithIndexes();
+        msStorage.init();
+
+        var dtos = IntStream.range(0, 1000).mapToObj(this::newDto).collect(Collectors.toList());
+        trackNanos(() -> msStorage.save(dtos), "save 1000 dtos");
+
+        trackNanos(() -> msStorage.findById(500L).id(), "find by id");
+    }
+
+    private void test() throws Exception {
         storage.init();
 
         Storage storage1 = storage;
@@ -58,15 +84,19 @@ public class PerformanceTest {
     }
 
     private void trackNanos(DTO toStore) throws Exception {
+        trackNanos(() -> storage.save(toStore), "Saving dto");
+    }
+
+    private void trackNanos(Action action, String label) throws Exception {
         long start = LocalDateTime.now().getNano();
 
-        storage.save(toStore);
+        action.execute();
 
-        System.out.println(LocalDateTime.now().getNano() - start);
+        System.out.println(label + " took ns:" + (LocalDateTime.now().getNano() - start));
     }
 
     private DTO newDto(int integer) {
-        return new DTO(IntStream.range(0, 30)
+        return new DTO(idCounter++, IntStream.range(0, 30)
                 .mapToObj(this::createDataItem)
                 .collect(Collectors.toList()));
     }
@@ -82,5 +112,9 @@ public class PerformanceTest {
         } else {
             return String.valueOf(value);
         }
+    }
+
+    interface Action {
+        void execute() throws Exception;
     }
 }
